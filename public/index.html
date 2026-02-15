@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Signage Player</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -1019,14 +1020,347 @@
             regionDiv.style.left = `${region.left}px`;
             regionDiv.style.zIndex = region.z_index;
 
+            // Handle widgets first
+            if (region.widget_type && region.widget_config) {
+                addLog(`Rendering widget: ${region.widget_type} in region ${region.name}`, 'info');
+                renderWidget(regionDiv, region.widget_type, region.widget_config);
+            }
             // Handle content or playlist
-            if (region.content) {
+            else if (region.content) {
                 displayContent(regionDiv, region.content);
             } else if (region.playlist && region.playlist.contents) {
                 playPlaylist(regionDiv, region.playlist.contents);
             }
 
             container.appendChild(regionDiv);
+        }
+
+        // Render widget in region
+        function renderWidget(container, widgetType, widgetConfig) {
+            container.innerHTML = '';
+            
+            addLog(`Widget config received: ${JSON.stringify(widgetConfig)}`, 'info');
+            
+            switch(widgetType) {
+                case 'text':
+                    renderTextWidget(container, widgetConfig);
+                    break;
+                case 'clock':
+                    renderClockWidget(container, widgetConfig);
+                    break;
+                case 'weather':
+                    renderWeatherWidget(container, widgetConfig);
+                    break;
+                case 'qrcode':
+                    addLog(`QRCode library available: ${typeof QRCode !== 'undefined'}`, 'info');
+                    renderQRCodeWidget(container, widgetConfig);
+                    break;
+                case 'youtube':
+                    renderYouTubeWidget(container, widgetConfig);
+                    break;
+                case 'countdown':
+                    renderCountdownWidget(container, widgetConfig);
+                    break;
+                case 'rss':
+                    renderRSSWidget(container, widgetConfig);
+                    break;
+                default:
+                    addLog(`Unknown widget type: ${widgetType}`, 'warning');
+            }
+        }
+
+        // Text Widget
+        function renderTextWidget(container, config) {
+            const textDiv = document.createElement('div');
+            textDiv.style.width = '100%';
+            textDiv.style.height = '100%';
+            textDiv.style.display = 'flex';
+            textDiv.style.alignItems = 'center';
+            textDiv.style.justifyContent = 'center';
+            textDiv.style.backgroundColor = config.backgroundColor || 'transparent';
+            textDiv.style.color = config.fontColor || '#ffffff';
+            textDiv.style.fontSize = `${config.fontSize || 32}px`;
+            textDiv.style.fontFamily = config.fontFamily || 'Arial';
+            textDiv.style.fontWeight = config.fontWeight || 'normal';
+            textDiv.style.fontStyle = config.italic ? 'italic' : 'normal';
+            textDiv.style.textDecoration = config.underline ? 'underline' : 'none';
+            textDiv.style.textAlign = config.alignment || 'center';
+            textDiv.style.padding = '8px';
+            textDiv.style.wordBreak = 'break-word';
+            textDiv.style.overflow = 'hidden';
+            textDiv.textContent = config.text || 'Text Widget';
+            container.appendChild(textDiv);
+        }
+
+        // Clock Widget
+        function renderClockWidget(container, config) {
+            const clockDiv = document.createElement('div');
+            clockDiv.style.width = '100%';
+            clockDiv.style.height = '100%';
+            clockDiv.style.display = 'flex';
+            clockDiv.style.flexDirection = 'column';
+            clockDiv.style.alignItems = 'center';
+            clockDiv.style.justifyContent = 'center';
+            clockDiv.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            clockDiv.style.color = 'white';
+            clockDiv.style.fontFamily = 'Arial, sans-serif';
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.style.fontSize = '48px';
+            timeDiv.style.fontWeight = 'bold';
+            timeDiv.style.marginBottom = '10px';
+            
+            const dateDiv = document.createElement('div');
+            dateDiv.style.fontSize = '18px';
+            dateDiv.style.opacity = '0.9';
+            dateDiv.style.display = config.showDate ? 'block' : 'none';
+            
+            function updateClock() {
+                const now = new Date();
+                const timeFormat = config.format24h ? 'en-GB' : 'en-US';
+                const timeOptions = { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit',
+                    hour12: !config.format24h 
+                };
+                timeDiv.textContent = now.toLocaleTimeString(timeFormat, timeOptions);
+                
+                if (config.showDate) {
+                    const dateOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+                    dateDiv.textContent = now.toLocaleDateString('en-US', dateOptions);
+                }
+            }
+            
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            clockDiv.appendChild(timeDiv);
+            clockDiv.appendChild(dateDiv);
+            container.appendChild(clockDiv);
+        }
+
+        // Weather Widget
+        function renderWeatherWidget(container, config) {
+            const weatherDiv = document.createElement('div');
+            weatherDiv.style.width = '100%';
+            weatherDiv.style.height = '100%';
+            weatherDiv.style.display = 'flex';
+            weatherDiv.style.flexDirection = 'column';
+            weatherDiv.style.alignItems = 'center';
+            weatherDiv.style.justifyContent = 'center';
+            weatherDiv.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            weatherDiv.style.color = 'white';
+            weatherDiv.style.fontFamily = 'Arial, sans-serif';
+            weatherDiv.innerHTML = `
+                <svg style="width: 80px; height: 80px; margin-bottom: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                </svg>
+                <div style="font-size: 48px; font-weight: bold; margin-bottom: 10px;">25°C</div>
+                <div style="font-size: 18px; opacity: 0.9;">${config.location || 'Singapore'}</div>
+                <div style="font-size: 14px; opacity: 0.8; margin-top: 5px;">Partly Cloudy</div>
+            `;
+            container.appendChild(weatherDiv);
+        }
+
+        // QR Code Widget
+        function renderQRCodeWidget(container, config) {
+            const qrDiv = document.createElement('div');
+            qrDiv.style.width = '100%';
+            qrDiv.style.height = '100%';
+            qrDiv.style.display = 'flex';
+            qrDiv.style.flexDirection = 'column';
+            qrDiv.style.alignItems = 'center';
+            qrDiv.style.justifyContent = 'center';
+            qrDiv.style.backgroundColor = 'white';
+            
+            container.appendChild(qrDiv);
+            
+            if (config.content) {
+                if (typeof QRCode !== 'undefined') {
+                    // Wait for container to be rendered
+                    setTimeout(() => {
+                        const containerWidth = container.offsetWidth || 300;
+                        const containerHeight = container.offsetHeight || 300;
+                        const size = Math.min(containerWidth, containerHeight) * 0.8;
+                        
+                        addLog(`Generating QR code with QRCode.js: ${config.content.substring(0, 50)}... (size: ${size}px)`, 'info');
+                        
+                        try {
+                            // Create a wrapper div for the QR code
+                            const qrWrapper = document.createElement('div');
+                            qrWrapper.style.display = 'flex';
+                            qrWrapper.style.alignItems = 'center';
+                            qrWrapper.style.justifyContent = 'center';
+                            
+                            // Generate QR code using QRCode.js
+                            new QRCode(qrWrapper, {
+                                text: config.content,
+                                width: size,
+                                height: size,
+                                colorDark: "#000000",
+                                colorLight: "#ffffff",
+                                correctLevel: QRCode.CorrectLevel.M
+                            });
+                            
+                            qrDiv.innerHTML = '';
+                            qrDiv.appendChild(qrWrapper);
+                            addLog('QR Code generated successfully with QRCode.js', 'success');
+                        } catch (error) {
+                            addLog(`QR Code generation error: ${error.message}`, 'error');
+                            qrDiv.innerHTML = `
+                                <div style="color: #666; font-size: 14px;">Error: ${error.message}</div>
+                            `;
+                        }
+                    }, 100);
+                } else {
+                    addLog('QRCode library not loaded', 'error');
+                    qrDiv.innerHTML = `
+                        <div style="color: #ff0000; font-size: 14px; padding: 20px; text-align: center;">
+                            QRCode library not loaded<br>
+                            <small>Check browser console for errors</small>
+                        </div>
+                    `;
+                }
+            } else {
+                addLog('QR Code widget has no content', 'warning');
+                qrDiv.innerHTML = `
+                    <div style="width: 200px; height: 200px; background: #1a1a1a; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <svg style="width: 150px; height: 150px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                        </svg>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 14px; color: #666;">No content to encode</div>
+                `;
+            }
+        }
+
+        // YouTube Widget
+        function renderYouTubeWidget(container, config) {
+            if (config.videoId) {
+                const iframe = document.createElement('iframe');
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                iframe.src = `https://www.youtube.com/embed/${config.videoId}?autoplay=1&mute=1&loop=1&playlist=${config.videoId}`;
+                iframe.allow = 'autoplay; encrypted-media';
+                container.appendChild(iframe);
+            } else {
+                const placeholderDiv = document.createElement('div');
+                placeholderDiv.style.width = '100%';
+                placeholderDiv.style.height = '100%';
+                placeholderDiv.style.display = 'flex';
+                placeholderDiv.style.flexDirection = 'column';
+                placeholderDiv.style.alignItems = 'center';
+                placeholderDiv.style.justifyContent = 'center';
+                placeholderDiv.style.background = 'linear-gradient(135deg, #FF0000 0%, #CC0000 100%)';
+                placeholderDiv.style.color = 'white';
+                placeholderDiv.innerHTML = `
+                    <svg style="width: 100px; height: 100px; margin-bottom: 20px;" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                    <div style="font-size: 16px; opacity: 0.9;">YouTube Video</div>
+                `;
+                container.appendChild(placeholderDiv);
+            }
+        }
+
+        // Countdown Widget
+        function renderCountdownWidget(container, config) {
+            const countdownDiv = document.createElement('div');
+            countdownDiv.style.width = '100%';
+            countdownDiv.style.height = '100%';
+            countdownDiv.style.display = 'flex';
+            countdownDiv.style.flexDirection = 'column';
+            countdownDiv.style.alignItems = 'center';
+            countdownDiv.style.justifyContent = 'center';
+            countdownDiv.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            countdownDiv.style.color = 'white';
+            countdownDiv.style.fontFamily = 'Arial, sans-serif';
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.style.fontSize = '24px';
+            titleDiv.style.marginBottom = '20px';
+            titleDiv.style.opacity = '0.9';
+            titleDiv.textContent = config.title || 'Countdown';
+            
+            const timerDiv = document.createElement('div');
+            timerDiv.style.display = 'flex';
+            timerDiv.style.gap = '20px';
+            timerDiv.style.fontSize = '48px';
+            timerDiv.style.fontWeight = 'bold';
+            
+            function updateCountdown() {
+                if (!config.targetDate) {
+                    timerDiv.innerHTML = '<div>No date set</div>';
+                    return;
+                }
+                
+                const now = new Date().getTime();
+                const target = new Date(config.targetDate).getTime();
+                const distance = target - now;
+                
+                if (distance < 0) {
+                    timerDiv.innerHTML = '<div>Event Started!</div>';
+                    return;
+                }
+                
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                timerDiv.innerHTML = `
+                    <div style="text-align: center;">
+                        <div>${days}</div>
+                        <div style="font-size: 14px; opacity: 0.8;">Days</div>
+                    </div>
+                    <div style="font-size: 48px;">:</div>
+                    <div style="text-align: center;">
+                        <div>${hours}</div>
+                        <div style="font-size: 14px; opacity: 0.8;">Hours</div>
+                    </div>
+                    <div style="font-size: 48px;">:</div>
+                    <div style="text-align: center;">
+                        <div>${minutes}</div>
+                        <div style="font-size: 14px; opacity: 0.8;">Min</div>
+                    </div>
+                    <div style="font-size: 48px;">:</div>
+                    <div style="text-align: center;">
+                        <div>${seconds}</div>
+                        <div style="font-size: 14px; opacity: 0.8;">Sec</div>
+                    </div>
+                `;
+            }
+            
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+            
+            countdownDiv.appendChild(titleDiv);
+            countdownDiv.appendChild(timerDiv);
+            container.appendChild(countdownDiv);
+        }
+
+        // RSS Widget
+        function renderRSSWidget(container, config) {
+            const rssDiv = document.createElement('div');
+            rssDiv.style.width = '100%';
+            rssDiv.style.height = '100%';
+            rssDiv.style.display = 'flex';
+            rssDiv.style.flexDirection = 'column';
+            rssDiv.style.alignItems = 'center';
+            rssDiv.style.justifyContent = 'center';
+            rssDiv.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+            rssDiv.style.color = 'white';
+            rssDiv.style.fontFamily = 'Arial, sans-serif';
+            rssDiv.innerHTML = `
+                <svg style="width: 80px; height: 80px; margin-bottom: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                </svg>
+                <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">RSS Feed</div>
+                <div style="font-size: 14px; opacity: 0.9;">${config.feedUrl || 'No feed URL'}</div>
+            `;
+            container.appendChild(rssDiv);
         }
 
         // Display single content item
@@ -1170,6 +1504,13 @@
         async function init() {
             addLog('🚀 Player initializing...', 'info');
             addLog(`API URL: ${API_URL}`, 'info');
+            
+            // Check if QRCode library is loaded
+            if (typeof QRCode !== 'undefined') {
+                addLog('✓ QRCode library loaded successfully', 'success');
+            } else {
+                addLog('✗ QRCode library NOT loaded', 'error');
+            }
             
             displayCode = getDisplayCode();
             playerToken = getStoredToken();
