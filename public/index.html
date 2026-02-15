@@ -149,6 +149,190 @@
         #fullscreen-btn.active {
             display: flex;
         }
+
+        #heartbeat-indicator {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: monospace;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: none;
+            z-index: 9999;
+        }
+
+        #heartbeat-indicator.active {
+            display: block;
+        }
+
+        #heartbeat-indicator .pulse {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #4CAF50;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        #heartbeat-indicator.checking .pulse {
+            background: #FFC107;
+            animation: pulse 0.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        #debug-log {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 400px;
+            max-height: 300px;
+            background: rgba(0, 0, 0, 0.9);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            border: 2px solid rgba(0, 255, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+            z-index: 9998;
+        }
+
+        #debug-log.active {
+            display: block;
+        }
+
+        #debug-log-header {
+            background: rgba(0, 255, 0, 0.2);
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #debug-log-header h3 {
+            margin: 0;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        #debug-log-close {
+            background: none;
+            border: none;
+            color: #00ff00;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #debug-log-close:hover {
+            color: #ff0000;
+        }
+
+        #debug-log-content {
+            padding: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+
+        #debug-log-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #debug-log-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        #debug-log-content::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 3px 0;
+        }
+
+        .log-entry .timestamp {
+            color: #888;
+            margin-right: 8px;
+        }
+
+        .log-entry.info { color: #00ff00; }
+        .log-entry.warning { color: #FFC107; }
+        .log-entry.error { color: #ff0000; }
+        .log-entry.success { color: #4CAF50; }
+
+        #debug-log-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #00ff00;
+            border: 2px solid rgba(0, 255, 0, 0.3);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            z-index: 9997;
+            transition: all 0.3s ease;
+        }
+
+        #debug-log-toggle:hover {
+            background: rgba(0, 255, 0, 0.2);
+            transform: scale(1.1);
+        }
+
+        #debug-log-toggle.hidden {
+            display: none;
+        }
+
+        #force-refresh-btn {
+            position: fixed;
+            bottom: 80px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #FFC107;
+            border: 2px solid rgba(255, 193, 7, 0.3);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            z-index: 9997;
+            transition: all 0.3s ease;
+        }
+
+        #force-refresh-btn:hover {
+            background: rgba(255, 193, 7, 0.2);
+            transform: scale(1.1) rotate(180deg);
+        }
+
+        #force-refresh-btn:active {
+            transform: scale(0.95) rotate(180deg);
+        }
     </style>
 </head>
 <body>
@@ -222,6 +406,35 @@
         </svg>
     </button>
 
+    <div id="heartbeat-indicator">
+        <span class="pulse"></span>
+        <span id="heartbeat-text">Heartbeat Active</span>
+    </div>
+
+    <button id="debug-log-toggle" title="Toggle Debug Log">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+    </button>
+
+    <button id="force-refresh-btn" title="Force Refresh Content">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+    </button>
+
+    <div id="debug-log">
+        <div id="debug-log-header">
+            <h3>🔍 Debug Log</h3>
+            <button id="debug-log-close">×</button>
+        </div>
+        <div id="debug-log-content"></div>
+    </div>
+
     <script>
         // Dynamic API URL - defaults to localhost, can be overridden via query param or environment
         const getApiUrl = () => {
@@ -248,7 +461,57 @@
         let displayCode = null;
         let playerToken = null;
         let currentLayout = null;
-        let refreshInterval = null;
+        let currentPlaylistId = null; // Track current playlist ID
+        let currentContentType = null; // Track what's currently playing: 'layout' or 'schedule'
+        let heartbeatInterval = null; // Heartbeat for schedule checking (5 seconds)
+        let debugLogEnabled = true; // Debug log visibility
+        const maxLogEntries = 50; // Maximum log entries to keep
+
+        // Debug logging functions
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            
+            const logContent = document.getElementById('debug-log-content');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span>${message}`;
+            
+            logContent.appendChild(entry);
+            
+            // Remove old entries if too many
+            const entries = logContent.querySelectorAll('.log-entry');
+            if (entries.length > maxLogEntries) {
+                entries[0].remove();
+            }
+            
+            // Auto-scroll to bottom
+            logContent.scrollTop = logContent.scrollHeight;
+            
+            // Also log to console
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('debug-log-content').innerHTML = '';
+        }
+
+        function toggleDebugLog() {
+            const debugLog = document.getElementById('debug-log');
+            const toggle = document.getElementById('debug-log-toggle');
+            
+            if (debugLog.classList.contains('active')) {
+                debugLog.classList.remove('active');
+                toggle.classList.remove('hidden');
+            } else {
+                debugLog.classList.add('active');
+                toggle.classList.add('hidden');
+            }
+        }
 
         // Get or set display code
         function getDisplayCode() {
@@ -258,6 +521,7 @@
         function setDisplayCode(code) {
             localStorage.setItem('displayCode', code.toUpperCase());
             displayCode = code.toUpperCase();
+            addLog(`Display code set: ${code.toUpperCase()}`, 'info');
         }
 
         // Get stored token
@@ -269,6 +533,7 @@
         function saveToken(token) {
             localStorage.setItem('playerToken', token);
             playerToken = token;
+            addLog('Player token saved', 'success');
         }
 
         // Show token input
@@ -330,9 +595,7 @@
                     // Wait a moment for the backend to process
                     setTimeout(() => {
                         checkForContent();
-                        // Start refresh interval
-                        if (refreshInterval) clearInterval(refreshInterval);
-                        refreshInterval = setInterval(checkForContent, 30000);
+                        // Note: heartbeat will be started by checkForContent() once content is loaded
                     }, 1000);
                 }
             });
@@ -350,14 +613,11 @@
         // Register display with backend
         async function registerDisplay() {
             if (!playerToken) {
-                console.log('No token, skipping registration');
+                addLog('No token found, skipping registration', 'warning');
                 return false;
             }
 
-            console.log('Registering display...', {
-                code: displayCode,
-                apiUrl: `${API_URL}/player/register`
-            });
+            addLog(`Registering display ${displayCode}...`, 'info');
 
             // Hide reset button when attempting to register
             hideResetButton();
@@ -381,14 +641,14 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Display registered successfully:', data);
+                    addLog(`✓ Display registered successfully`, 'success');
                     document.getElementById('setup-message').textContent = 'Connected! Loading content...';
                     return true;
                 } else {
                     const error = await response.json();
-                    console.error('Registration failed:', error);
                     
                     if (response.status === 401) {
+                        addLog('✗ Registration failed: Invalid token', 'error');
                         showError('Invalid token. Please check your token in CMS Settings.');
                         document.getElementById('setup-message').textContent = 'Invalid token. Please re-enter.';
                         localStorage.removeItem('playerToken');
@@ -396,15 +656,18 @@
                         document.getElementById('token-input-section').style.display = 'block';
                         showResetButton();
                     } else if (response.status === 404) {
+                        addLog(`✗ Registration failed: Display code "${displayCode}" not found`, 'error');
                         showError(`Display code "${displayCode}" not found. Please verify the code in the CMS.`);
                         document.getElementById('setup-message').textContent = 
                             `Display code "${displayCode}" not found. Please check the code in CMS.`;
                         showResetButton();
                     } else if (response.status === 403) {
+                        addLog('✗ Registration failed: Access denied (IP not whitelisted)', 'error');
                         showError('Access denied. Your IP may not be whitelisted.');
                         document.getElementById('setup-message').textContent = 'Access denied. Check IP whitelist settings.';
                         showResetButton();
                     } else {
+                        addLog(`✗ Registration failed: ${error.message || 'Unknown error'}`, 'error');
                         showError(`Connection failed: ${error.message || 'Unknown error'}`);
                         document.getElementById('setup-message').textContent = 'Connection failed. Please try again.';
                         showResetButton();
@@ -412,7 +675,7 @@
                     return false;
                 }
             } catch (error) {
-                console.error('Registration error:', error);
+                addLog(`✗ Network error during registration: ${error.message}`, 'error');
                 showError(`Network error: ${error.message}`);
                 document.getElementById('setup-message').textContent = 'Network error. Check API URL and connection.';
                 showResetButton();
@@ -429,10 +692,14 @@
                 return;
             }
 
-            console.log('Checking for content...', {
-                code: displayCode,
-                apiUrl: `${API_URL}/player/${displayCode}/content`
-            });
+            // Show heartbeat checking state
+            const heartbeatIndicator = document.getElementById('heartbeat-indicator');
+            const heartbeatText = document.getElementById('heartbeat-text');
+            heartbeatIndicator.classList.add('checking');
+            heartbeatText.textContent = 'Checking for updates...';
+
+            const currentTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Singapore' });
+            addLog(`⟳ Checking for content updates... (${currentTime})`, 'info');
 
             try {
                 const response = await fetch(`${API_URL}/player/${displayCode}/content`, {
@@ -447,7 +714,7 @@
                 if (response.status === 401) {
                     // Token is invalid
                     const errorData = await response.json();
-                    console.error('Authentication failed:', errorData);
+                    addLog('✗ Authentication failed: Invalid token', 'error');
                     localStorage.removeItem('playerToken');
                     playerToken = null;
                     showError('Invalid token. Please enter the correct token from CMS Settings.');
@@ -457,13 +724,14 @@
                     document.getElementById('token-input-section').style.display = 'block';
                     document.getElementById('setup-message').textContent = 'Token expired or invalid. Please re-enter.';
                     showResetButton();
+                    stopHeartbeat();
                     return;
                 }
                 
                 if (response.status === 404) {
                     // Display not registered yet
                     const errorData = await response.json();
-                    console.log('Display not registered:', errorData);
+                    addLog(`✗ Display code "${displayCode}" not found`, 'error');
                     document.getElementById('setup-screen').style.display = 'flex';
                     document.getElementById('player-container').style.display = 'none';
                     document.getElementById('fullscreen-btn').classList.remove('active');
@@ -475,6 +743,7 @@
                     // Show reset button
                     showResetButton();
                     showError('Display not found. Please check your display code.');
+                    stopHeartbeat();
                     setTimeout(checkForContent, 10000);
                     return;
                 }
@@ -482,46 +751,171 @@
                 if (response.status === 403) {
                     // Access denied
                     const errorData = await response.json();
-                    console.error('Access denied:', errorData);
+                    addLog('✗ Access denied: IP not whitelisted', 'error');
                     showError('Access denied. Your IP may not be whitelisted.');
                     document.getElementById('setup-message').textContent = 'Access denied. Check IP whitelist settings.';
                     showResetButton();
+                    stopHeartbeat();
                     setTimeout(checkForContent, 30000);
                     return;
                 }
                 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Content received:', data);
+                    addLog(`✓ Content received - Type: ${data.type || 'unknown'}`, 'info');
                     
-                    if (data.layout) {
-                        document.getElementById('setup-screen').style.display = 'none';
-                        document.getElementById('player-container').style.display = 'block';
-                        document.getElementById('fullscreen-btn').classList.add('active');
-                        hideResetButton();
-                        renderLayout(data.layout);
+                    // Update heartbeat indicator
+                    heartbeatIndicator.classList.remove('checking');
+                    
+                    // Handle scheduled playlist
+                    if (data.type === 'schedule' && data.playlist) {
+                        addLog(`📅 Active schedule found: "${data.playlist.name}" (ID: ${data.playlist.id})`, 'success');
+                        addLog(`   Start: ${data.schedule.start_time} | End: ${data.schedule.end_time}`, 'info');
+                        addLog(`   Current content type: ${currentContentType}, Current playlist: ${currentPlaylistId}`, 'info');
+                        heartbeatText.textContent = `Schedule Active: ${data.playlist.name}`;
+                        
+                        // Check if we need to switch
+                        const needsSwitch = currentContentType !== 'schedule' || currentPlaylistId !== data.playlist.id;
+                        addLog(`   Needs switch: ${needsSwitch}`, 'info');
+                        
+                        if (needsSwitch) {
+                            addLog(`▶ Switching to scheduled playlist (${data.playlist.contents?.length || 0} items)`, 'success');
+                            document.getElementById('setup-screen').style.display = 'none';
+                            document.getElementById('player-container').style.display = 'block';
+                            document.getElementById('fullscreen-btn').classList.add('active');
+                            hideResetButton();
+                            renderScheduledPlaylist(data.playlist);
+                            currentContentType = 'schedule';
+                        } else {
+                            addLog(`   Already showing this schedule, no switch needed`, 'info');
+                        }
+                        startHeartbeat();
+                    }
+                    // Handle scheduled layout
+                    else if (data.type === 'schedule_layout' && data.layout) {
+                        addLog(`📅 Active schedule found: "${data.layout.name}" (Layout ID: ${data.layout.id})`, 'success');
+                        addLog(`   Start: ${data.schedule.start_time} | End: ${data.schedule.end_time}`, 'info');
+                        addLog(`   Current content type: ${currentContentType}, Current layout: ${currentLayout?.id}`, 'info');
+                        heartbeatText.textContent = `Schedule Active: ${data.layout.name}`;
+                        
+                        // Check if we need to switch
+                        const needsSwitch = currentContentType !== 'schedule_layout' || !currentLayout || currentLayout.id !== data.layout.id;
+                        addLog(`   Needs switch: ${needsSwitch}`, 'info');
+                        
+                        if (needsSwitch) {
+                            addLog(`▶ Switching to scheduled layout (${data.layout.regions?.length || 0} regions)`, 'success');
+                            document.getElementById('setup-screen').style.display = 'none';
+                            document.getElementById('player-container').style.display = 'block';
+                            document.getElementById('fullscreen-btn').classList.add('active');
+                            hideResetButton();
+                            renderLayout(data.layout);
+                            currentContentType = 'schedule_layout';
+                        } else {
+                            addLog(`   Already showing this scheduled layout, no switch needed`, 'info');
+                        }
+                        startHeartbeat();
+                    }
+                    // Handle layout
+                    else if (data.type === 'layout' && data.layout) {
+                        addLog(`📐 No active schedule, showing default layout: "${data.layout.name}" (ID: ${data.layout.id})`, 'info');
+                        addLog(`   Current content type: ${currentContentType}, Current layout: ${currentLayout?.id}`, 'info');
+                        heartbeatText.textContent = `Layout: ${data.layout.name}`;
+                        
+                        // Check if we need to switch
+                        const needsSwitch = currentContentType !== 'layout' || !currentLayout || currentLayout.id !== data.layout.id;
+                        addLog(`   Needs switch: ${needsSwitch}`, 'info');
+                        
+                        if (needsSwitch) {
+                            addLog(`▶ Switching to layout (${data.layout.regions?.length || 0} regions)`, 'success');
+                            document.getElementById('setup-screen').style.display = 'none';
+                            document.getElementById('player-container').style.display = 'block';
+                            document.getElementById('fullscreen-btn').classList.add('active');
+                            hideResetButton();
+                            renderLayout(data.layout);
+                            currentContentType = 'layout';
+                        } else {
+                            addLog(`   Already showing this layout, no switch needed`, 'info');
+                        }
+                        startHeartbeat();
+                    }
+                    // Legacy support - if no type specified, assume layout
+                    else if (data.layout) {
+                        addLog(`📐 Legacy response, showing layout: "${data.layout.name}" (ID: ${data.layout.id})`, 'info');
+                        addLog(`   Current content type: ${currentContentType}`, 'info');
+                        heartbeatText.textContent = `Layout: ${data.layout.name}`;
+                        
+                        const needsSwitch = currentContentType !== 'layout' || !currentLayout || currentLayout.id !== data.layout.id;
+                        addLog(`   Needs switch: ${needsSwitch}`, 'info');
+                        
+                        if (needsSwitch) {
+                            addLog(`▶ Switching to layout (${data.layout.regions?.length || 0} regions)`, 'success');
+                            document.getElementById('setup-screen').style.display = 'none';
+                            document.getElementById('player-container').style.display = 'block';
+                            document.getElementById('fullscreen-btn').classList.add('active');
+                            hideResetButton();
+                            renderLayout(data.layout);
+                            currentContentType = 'layout';
+                        } else {
+                            addLog(`   Already showing this layout, no switch needed`, 'info');
+                        }
+                        startHeartbeat();
                     } else {
                         // No content assigned yet, keep showing setup screen
-                        console.log('No layout assigned yet');
+                        addLog('⏳ No layout or schedule assigned yet, waiting...', 'warning');
                         document.getElementById('setup-screen').style.display = 'flex';
                         document.getElementById('player-container').style.display = 'none';
                         document.getElementById('fullscreen-btn').classList.remove('active');
                         document.getElementById('code-input-section').style.display = 'none';
                         document.getElementById('token-input-section').style.display = 'none';
                         document.getElementById('setup-message').textContent = 'Connected! Waiting for layout assignment...';
+                        currentContentType = null;
+                        stopHeartbeat();
                         setTimeout(checkForContent, 10000);
                     }
                 } else {
-                    console.error('Unexpected response status:', response.status);
+                    heartbeatIndicator.classList.remove('checking');
+                    heartbeatText.textContent = 'Heartbeat Active';
+                    addLog(`✗ Unexpected response status: ${response.status}`, 'error');
                     const errorText = await response.text();
-                    console.error('Error response:', errorText);
                     showError(`Server error: ${response.status}`);
                     setTimeout(checkForContent, 10000);
                 }
             } catch (error) {
-                console.error('Connection error:', error);
+                addLog(`✗ Connection error: ${error.message}`, 'error');
                 showError(`Connection error: ${error.message}. Retrying...`);
+                heartbeatIndicator.classList.remove('checking');
+                heartbeatText.textContent = 'Connection Error';
                 setTimeout(checkForContent, 10000);
+            }
+        }
+
+        // Start heartbeat - checks for schedule changes every 5 seconds
+        function startHeartbeat() {
+            if (heartbeatInterval) {
+                return; // Already running
+            }
+            addLog('💓 Heartbeat started (checking every 5 seconds)', 'success');
+            
+            // Show heartbeat indicator
+            const heartbeatIndicator = document.getElementById('heartbeat-indicator');
+            heartbeatIndicator.classList.add('active');
+            
+            heartbeatInterval = setInterval(() => {
+                addLog('💓 Heartbeat pulse - checking for schedule changes...', 'info');
+                checkForContent();
+            }, 5000); // Check every 5 seconds
+        }
+
+        // Stop heartbeat
+        function stopHeartbeat() {
+            if (heartbeatInterval) {
+                addLog('💔 Heartbeat stopped', 'warning');
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+                
+                // Hide heartbeat indicator
+                const heartbeatIndicator = document.getElementById('heartbeat-indicator');
+                heartbeatIndicator.classList.remove('active');
             }
         }
 
@@ -552,6 +946,66 @@
             }
 
             currentLayout = layout;
+            currentPlaylistId = null; // Clear playlist ID since we're showing layout
+        }
+
+        // Render scheduled playlist (fullscreen)
+        function renderScheduledPlaylist(playlist) {
+            const container = document.getElementById('player-container');
+            container.innerHTML = '';
+            
+            // Set container to fullscreen
+            container.style.width = '100vw';
+            container.style.height = '100vh';
+            container.style.transform = 'none';
+            container.style.left = '0';
+            container.style.top = '0';
+
+            // Play playlist contents in sequence
+            if (playlist.contents && playlist.contents.length > 0) {
+                playPlaylistFullscreen(container, playlist.contents);
+            }
+
+            currentLayout = null; // Clear layout since we're showing playlist
+            currentPlaylistId = playlist.id; // Track current playlist
+        }
+
+        // Play playlist in fullscreen
+        function playPlaylistFullscreen(container, contents) {
+            let currentIndex = 0;
+
+            function showNext() {
+                if (contents.length === 0) return;
+
+                const content = contents[currentIndex];
+                container.innerHTML = '';
+
+                if (content.type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = `${API_URL.replace('/api', '')}/storage/${content.file_path}`;
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'contain';
+                    container.appendChild(img);
+                } else if (content.type === 'video') {
+                    const video = document.createElement('video');
+                    video.src = `${API_URL.replace('/api', '')}/storage/${content.file_path}`;
+                    video.autoplay = true;
+                    video.muted = true;
+                    video.style.width = '100%';
+                    video.style.height = '100%';
+                    video.style.objectFit = 'contain';
+                    container.appendChild(video);
+                }
+
+                const duration = content.duration || 10;
+                setTimeout(() => {
+                    currentIndex = (currentIndex + 1) % contents.length;
+                    showNext();
+                }, duration * 1000);
+            }
+
+            showNext();
         }
 
         // Render individual region
@@ -640,9 +1094,7 @@
             if (confirm('This will clear your saved code and token. Continue?')) {
                 localStorage.removeItem('displayCode');
                 localStorage.removeItem('playerToken');
-                if (refreshInterval) {
-                    clearInterval(refreshInterval);
-                }
+                stopHeartbeat();
                 location.reload();
             }
         }
@@ -716,12 +1168,23 @@
 
         // Initialize player
         async function init() {
+            addLog('🚀 Player initializing...', 'info');
+            addLog(`API URL: ${API_URL}`, 'info');
+            
             displayCode = getDisplayCode();
             playerToken = getStoredToken();
+            
+            if (displayCode) {
+                addLog(`Display code loaded: ${displayCode}`, 'info');
+            }
+            if (playerToken) {
+                addLog('Player token loaded from storage', 'info');
+            }
             
             setupCodeInput();
             setupTokenInput();
             setupFullscreenButton();
+            setupDebugLog();
             
             // Check if we already have code and token
             if (displayCode && playerToken) {
@@ -735,9 +1198,7 @@
                 if (success) {
                     setTimeout(() => {
                         checkForContent();
-                        // Refresh content every 30 seconds
-                        if (refreshInterval) clearInterval(refreshInterval);
-                        refreshInterval = setInterval(checkForContent, 30000);
+                        // Note: heartbeat will be started by checkForContent() once content is loaded
                     }, 1000);
                 }
             } else if (displayCode) {
@@ -755,6 +1216,26 @@
                     renderLayout(currentLayout);
                 }
             });
+        }
+
+        // Setup debug log controls
+        function setupDebugLog() {
+            const toggle = document.getElementById('debug-log-toggle');
+            const closeBtn = document.getElementById('debug-log-close');
+            const forceRefreshBtn = document.getElementById('force-refresh-btn');
+            
+            toggle.addEventListener('click', toggleDebugLog);
+            closeBtn.addEventListener('click', toggleDebugLog);
+            forceRefreshBtn.addEventListener('click', forceRefresh);
+            
+            // Show debug log by default
+            toggleDebugLog();
+        }
+
+        // Force refresh content
+        function forceRefresh() {
+            addLog('🔄 Force refresh triggered by user', 'warning');
+            checkForContent();
         }
 
         // Start player when page loads
